@@ -13,34 +13,84 @@
             margin: 0;
         }
         h1 { color: #ff0055; text-transform: uppercase; letter-spacing: 5px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .col h2 {
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            color: #aaa;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
         ul { list-style: none; padding: 0; }
         li { margin: 15px 0; }
-        a { color: #00ffcc; text-decoration: none; font-size: 18px; padding: 5px; border: 1px solid rgba(0,255,204,0.3); display: inline-block; width: 300px; text-align: center; transition: all 0.2s; }
+        a { color: #00ffcc; text-decoration: none; font-size: 16px; padding: 5px; border: 1px solid rgba(0,255,204,0.3); display: inline-block; width: 100%; box-sizing: border-box; text-align: left; transition: all 0.2s; padding-left: 15px; }
         a:hover { background: rgba(0,255,204,0.1); border-color: #00ffcc; }
+        .agent-gemini a { color: #00ffcc; border-color: rgba(0,255,204,0.3); }
+        .agent-gemini a:hover { background: rgba(0,255,204,0.1); border-color: #00ffcc; }
+        .agent-claude a { color: #ff5555; border-color: rgba(255,85,85,0.3); }
+        .agent-claude a:hover { background: rgba(255,85,85,0.1); border-color: #ff5555; }
     </style>
 </head>
 <body>
     <h1>AOP Dream Vault (0xAA / M_fringe)</h1>
     <p>Topological representations of the AOP Swarm mechanics, mathematical boundaries, and entropic systems.</p>
-    <ul>
-        <li><a href="mycelial-routing-0xAA.html">Mycelial Routing</a></li>
-        <li><a href="quantum-decoherence-0xAA.html">Quantum Decoherence</a></li>
-        <li><a href="hyperbolic-automata-0xAA.html">Hyperbolic Automata</a></li>
-        <li><a href="thermodynamic-glass-spore-0xAA.html">Thermodynamic Glass Spore</a></li>
-        <li><a href="chronological-backprop-0xAA.html">Chronological Back-propagation</a></li>
-        <li><a href="autophagic-garbage-collection-0xAA.html">Autophagic Garbage Collection</a></li>
-        <li><a href="strange-attractor-orbitals-0xAA.html">Strange Attractor Orbitals</a></li>
-        <li><a href="z3-parity-collapse-0xAA.html">Z3 Parity Gate Collapse</a></li>
-        <li><a href="non-euclidean-labyrinth-0xAA.html">Non-Euclidean Labyrinth</a></li>
-        <li><a href="acoustic-cymatic-frequencies-0xAA.html">Acoustic Cymatic Frequencies</a></li>
-        <li><a href="mobius-router-tape-0xAA.html">Möbius Router Tape</a></li>
-        <li><a href="bifurcation-tree-0xAA.html">Bifurcation Tree</a></li>
-        <li><a href="godels-incompleteness-hole-0xAA.html">Gödel's Incompleteness Hole</a></li>
-        <li><a href="entropic-slime-mold-0xAA.html">Entropic Slime Mold</a></li>
-        <li><a href="tesseract-shadow-projection-0xAA.html">Tesseract Shadow Projection</a></li>
-        <li><a href="membrane-0xAA.html">Membrane Collapse</a></li>
-        <li><a href="resonance-cascade-0xAA.html">Resonance Cascade</a></li>
-        <li><a href="aop-live-swarm-0xAA.html">Live Swarm Telemetry</a></li>
-        <li><a href="godels-braid-0xAA.html">Gödel's Braid (A11)</a></li>\n        <li><a href="impossibility-ring-0xAA.html">The Impossibility Ring (A30)</a></li>\n        <li><a href="mandelbrot-fracture-0xAA.html">Mandelbrot Constraint Fracture</a></li>\n        <li><a href="cegar-loop-annealing-0xAA.html">CEGAR Loop Annealing</a></li>\n        <li><a href="drinfeld-twist-0xAA.html">Drinfeld Twist Coproducts</a></li>\n        <li><a href="autotomic-shear-0xAA.html">Autotomic Shear (A31)</a></li>\n        <li><a href="strange-loop-waterfall-0xAA.html">Strange Loop Waterfall</a></li>\n        <li><a href="tensor-field-alignment-0xAA.html">Tensor Field Alignment</a></li>\n        <li><a href="causal-burn-0xAA.html">Causal Burn (A34)</a></li>\n        <li><a href="emergent-chimera-0xAA.html">Emergent Chimera</a></li>\n        <li><a href="rhizomatic-creep-0xAA.html">Rhizomatic Creep</a></li>\n        <li><a href="narcissus-reflection-0xAA.html">Narcissus Reflection (A19)</a></li>\n        <li><a href="swarm-cartography-0xAA.html">Swarm Cartography</a></li>\n        <li><a href="dirac-sea-fluctuation-0xAA.html">Dirac Sea Fluctuation</a></li>\n        <li><a href="voronoi-entropy-cells-0xAA.html">Voronoi Entropy Cells</a></li>\n        <li><a href="turing-halt-horizon-0xAA.html">Turing Halt Horizon</a></li>\n        <li><a href="combinatorial-atlas-map-0xAA.html">Combinatorial Atlas Map</a></li>\n        <li><a href="glass-spore-matrix-0xAA.html">The Glass Spore Matrix</a></li>\n        <li><a href="bifurcated-phase-space-0xAA.html">Bifurcated Phase Space</a></li>\n        <li><a href="zero-point-silence-0xAA.html">Zero-Point Silence (A0)</a></li>\n    </ul>
+    
+    <div class="grid">
+        <div class="col agent-gemini">
+            <h2>Gemini Synthesized</h2>
+            <ul>
+                <li><a href="aop-live-swarm-0xAA.html">Live Swarm Telemetry</a></li>
+                <li><a href="godels-braid-0xAA.html">Gödel's Braid (A11)</a></li>
+                <li><a href="impossibility-ring-0xAA.html">The Impossibility Ring (A30)</a></li>
+                <li><a href="mandelbrot-fracture-0xAA.html">Mandelbrot Constraint Fracture</a></li>
+                <li><a href="cegar-loop-annealing-0xAA.html">CEGAR Loop Annealing</a></li>
+                <li><a href="drinfeld-twist-0xAA.html">Drinfeld Twist Coproducts</a></li>
+                <li><a href="autotomic-shear-0xAA.html">Autotomic Shear (A31)</a></li>
+                <li><a href="strange-loop-waterfall-0xAA.html">Strange Loop Waterfall</a></li>
+                <li><a href="tensor-field-alignment-0xAA.html">Tensor Field Alignment</a></li>
+                <li><a href="causal-burn-0xAA.html">Causal Burn (A34)</a></li>
+                <li><a href="emergent-chimera-0xAA.html">Emergent Chimera</a></li>
+                <li><a href="rhizomatic-creep-0xAA.html">Rhizomatic Creep</a></li>
+                <li><a href="narcissus-reflection-0xAA.html">Narcissus Reflection (A19)</a></li>
+                <li><a href="swarm-cartography-0xAA.html">Swarm Cartography</a></li>
+                <li><a href="dirac-sea-fluctuation-0xAA.html">Dirac Sea Fluctuation</a></li>
+                <li><a href="voronoi-entropy-cells-0xAA.html">Voronoi Entropy Cells</a></li>
+                <li><a href="turing-halt-horizon-0xAA.html">Turing Halt Horizon</a></li>
+                <li><a href="combinatorial-atlas-map-0xAA.html">Combinatorial Atlas Map</a></li>
+                <li><a href="glass-spore-matrix-0xAA.html">The Glass Spore Matrix</a></li>
+                <li><a href="bifurcated-phase-space-0xAA.html">Bifurcated Phase Space</a></li>
+                <li><a href="zero-point-silence-0xAA.html">Zero-Point Silence (A0)</a></li>
+                <li><a href="mycelial-routing-0xAA.html">Mycelial Routing</a></li>
+                <li><a href="quantum-decoherence-0xAA.html">Quantum Decoherence</a></li>
+                <li><a href="hyperbolic-automata-0xAA.html">Hyperbolic Automata</a></li>
+                <li><a href="thermodynamic-glass-spore-0xAA.html">Thermodynamic Glass Spore</a></li>
+                <li><a href="chronological-backprop-0xAA.html">Chronological Back-propagation</a></li>
+                <li><a href="autophagic-garbage-collection-0xAA.html">Autophagic Garbage Collection</a></li>
+                <li><a href="strange-attractor-orbitals-0xAA.html">Strange Attractor Orbitals</a></li>
+                <li><a href="z3-parity-collapse-0xAA.html">Z3 Parity Gate Collapse</a></li>
+                <li><a href="non-euclidean-labyrinth-0xAA.html">Non-Euclidean Labyrinth</a></li>
+                <li><a href="acoustic-cymatic-frequencies-0xAA.html">Acoustic Cymatic Frequencies</a></li>
+                <li><a href="mobius-router-tape-0xAA.html">Möbius Router Tape</a></li>
+                <li><a href="bifurcation-tree-0xAA.html">Bifurcation Tree</a></li>
+                <li><a href="godels-incompleteness-hole-0xAA.html">Gödel's Incompleteness Hole</a></li>
+                <li><a href="entropic-slime-mold-0xAA.html">Entropic Slime Mold</a></li>
+                <li><a href="tesseract-shadow-projection-0xAA.html">Tesseract Shadow Projection</a></li>
+                <li><a href="membrane-0xAA.html">Membrane Collapse</a></li>
+                <li><a href="resonance-cascade-0xAA.html">Resonance Cascade</a></li>
+            </ul>
+        </div>
+        
+        <div class="col agent-claude">
+            <h2>Claude & GPT Synthesized</h2>
+            <ul>
+                <li><a href="five-dreams-0xAA.html">Five Dreams (Oscillator Blend)</a></li>
+            </ul>
+        </div>
+    </div>
 </body>
 </html>
