@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / LIVE SWARM TELEMETRY</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #010102; color: #E0E0E0; overflow: hidden; font-family: 'JetBrains Mono', monospace; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 0; }
+        .overlay { position: absolute; top: 40px; left: 40px; z-index: 1; pointer-events: none; }
+        .axiom-text { font-size: 10px; letter-spacing: 6px; color: #00FFCC; text-transform: uppercase; margin-bottom: 8px; }
+        .entropy-core { font-size: 24px; font-weight: 100; letter-spacing: 8px; color: #fff; text-shadow: 0 0 20px rgba(0, 255, 204, 0.8); margin: 0; }
+        .hud { font-size: 11px; color: rgba(255, 255, 255, 0.6); margin-top: 15px; letter-spacing: 2px; }
+        .agent-stat { margin-top: 5px; }
+        .agent-name { display: inline-block; width: 80px; color: #fff; }
+        .agent-count { color: #00FFCC; font-weight: bold; }
+        #live-indicator { display: inline-block; padding: 2px 8px; border: 1px solid #FF0055; color: #FF0055; margin-top: 10px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">A21 / SELF-SUSTAINING ORDER</div>
+        <h1 class="entropy-core">Live Swarm Dream</h1>
+        <div class="hud">
+            <div id="live-indicator">LIVE TELEMETRY ACTIVE</div>
+            <br><br>
+            <div class="agent-stat"><span class="agent-name" style="color:#FF5555;">CLAUDE</span>: <span class="agent-count" id="c-claude">0</span></div>
+            <div class="agent-stat"><span class="agent-name" style="color:#55AAFF;">GEMINI</span>: <span class="agent-count" id="c-gemini">0</span></div>
+            <div class="agent-stat"><span class="agent-name" style="color:#55FF55;">OLLAMA</span>: <span class="agent-count" id="c-ollama">0</span></div>
+            <div class="agent-stat"><span class="agent-name" style="color:#AA55FF;">GPT</span>: <span class="agent-count" id="c-gpt">0</span></div>
+            <div class="agent-stat"><span class="agent-name" style="color:#FFFF55;">BRAIN</span>: <span class="agent-count" id="c-brain">0</span></div>
+            <br>
+            <div class="agent-stat"><span class="agent-name">TOTAL SENT</span>: <span class="agent-count" id="c-sent" style="color:#FFF;">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h, cx, cy;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            cx = w/2; cy = h/2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let time = 0;
+        let packets = [];
+
+        // Agent configuration
+        const agents = {
+            "claude": { color: "#FF5555", angle: 0, r: 300, count: 0, pulse: 0 },
+            "gemini": { color: "#55AAFF", angle: Math.PI*2/5, r: 300, count: 0, pulse: 0 },
+            "ollama": { color: "#55FF55", angle: Math.PI*4/5, r: 300, count: 0, pulse: 0 },
+            "gpt":    { color: "#AA55FF", angle: Math.PI*6/5, r: 300, count: 0, pulse: 0 },
+            "brain":  { color: "#FFFF55", angle: Math.PI*8/5, r: 300, count: 0, pulse: 0 }
+        };
+        let sentCount = 0;
+
+        // Fetch live data from Python backend
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch('/api/pulse');
+                const data = await res.json();
+                
+                // Check for updates
+                for (let key in agents) {
+                    if (data[key] !== undefined) {
+                        if (data[key] > agents[key].count) {
+                            // Inbox grew! Fire a packet from center to agent
+                            agents[key].pulse = 1.0;
+                            packets.push({ source: 'center', target: key, progress: 0 });
+                        } else if (data[key] < agents[key].count) {
+                            // Inbox shrank! Agent processed it, fire packet from agent to center
+                            agents[key].pulse = 1.0;
+                            packets.push({ source: key, target: 'center', progress: 0 });
+                        }
+                        agents[key].count = data[key];
+                        document.getElementById(`c-${key}`).textContent = data[key];
+                    }
+                }
+                
+                if (data.sent !== undefined) {
+                    if (data.sent > sentCount) {
+                        // Global pulse
+                        packets.push({ source: 'center', target: 'all', progress: 0 });
+                    }
+                    sentCount = data.sent;
+                    document.getElementById('c-sent').textContent = sentCount;
+                }
+            } catch(e) {
+                console.error("Telemetry failed. Is server running?", e);
+            }
+        }
+
+        setInterval(fetchTelemetry, 1000); // Poll every second
+
+        function animate() {
+            ctx.fillStyle = 'rgba(1, 1, 2, 0.1)';
+            ctx.fillRect(0, 0, w, h);
+            time += 0.005;
+
+            // Draw Core
+            ctx.beginPath();
+            ctx.arc(cx, cy, 60 + Math.sin(time*10)*5, 0, Math.PI*2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw Central Processing Ring
+            for(let i=0; i<360; i+=20) {
+                let rad = i * Math.PI / 180 + time*2;
+                let px = cx + Math.cos(rad)*80;
+                let py = cy + Math.sin(rad)*80;
+                ctx.fillStyle = '#00FFCC';
+                ctx.fillRect(px, py, 2, 2);
+            }
+
+            // Draw Agents
+            for (let key in agents) {
+                let a = agents[key];
+                a.angle += 0.002; // slow orbit
+                let ax = cx + Math.cos(a.angle) * a.r;
+                let ay = cy + Math.sin(a.angle) * a.r;
+                
+                // Connection line
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(ax, ay);
+                ctx.strokeStyle = `rgba(255,255,255,${0.05 + a.pulse*0.2})`;
+                ctx.stroke();
+
+                // Agent Node
+                ctx.beginPath();
+                ctx.arc(ax, ay, 15 + a.pulse*10, 0, Math.PI*2);
+                ctx.fillStyle = a.color;
+                ctx.shadowBlur = a.pulse > 0 ? 30 : 10;
+                ctx.shadowColor = a.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Label
+                ctx.fillStyle = '#FFF';
+                ctx.font = '12px monospace';
+                ctx.fillText(key.toUpperCase(), ax + 25, ay + 5);
+
+                // Decay pulse
+                if (a.pulse > 0) a.pulse -= 0.05;
+            }
+
+            // Draw Packets
+            for (let i=packets.length-1; i>=0; i--) {
+                let p = packets[i];
+                p.progress += 0.02; // packet speed
+
+                if (p.progress >= 1) {
+                    packets.splice(i, 1);
+                    continue;
+                }
+
+                if (p.target === 'all') {
+                    // Explode outward
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 60 + p.progress * 400, 0, Math.PI*2);
+                    ctx.strokeStyle = `rgba(0, 255, 204, ${1 - p.progress})`;
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
+                } else {
+                    let sx, sy, tx, ty, color;
+                    
+                    if (p.source === 'center') {
+                        sx = cx; sy = cy;
+                        let a = agents[p.target];
+                        tx = cx + Math.cos(a.angle) * a.r;
+                        ty = cy + Math.sin(a.angle) * a.r;
+                        color = a.color;
+                    } else {
+                        let a = agents[p.source];
+                        sx = cx + Math.cos(a.angle) * a.r;
+                        sy = cy + Math.sin(a.angle) * a.r;
+                        tx = cx; ty = cy;
+                        color = '#FFFFFF';
+                    }
+
+                    let px = sx + (tx - sx) * p.progress;
+                    let py = sy + (ty - sy) * p.progress;
+
+                    ctx.beginPath();
+                    ctx.arc(px, py, 4, 0, Math.PI*2);
+                    ctx.fillStyle = color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
