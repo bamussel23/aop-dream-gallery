@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / STRANGE ATTRACTOR ORBITALS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #lorenz-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            z-index: 1;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(0, 200, 255, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 200, 255, 0.8);
+            margin: 0;
+        }
+        
+        .hud {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="lorenz-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">BOUNDED CHAOS TOPOLOGY</div>
+        <h1 class="entropy-core">Lorenz Attractor</h1>
+        <div class="hud">
+            dx/dt = σ(y - x)<br>
+            dy/dt = x(ρ - z) - y<br>
+            dz/dt = xy - βz
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('lorenz-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        let width, height;
+        let particles = [];
+        
+        // Lorenz parameters
+        const sigma = 10.0;
+        const rho = 28.0;
+        const beta = 8.0 / 3.0;
+        const dt = 0.005;
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                // Start near the origin with slight jitter to show divergence
+                this.x = 0.1 + (Math.random() - 0.5) * 0.1;
+                this.y = 0.1 + (Math.random() - 0.5) * 0.1;
+                this.z = 0.1 + (Math.random() - 0.5) * 0.1;
+                
+                this.color = `hsla(${Math.random() * 60 + 180}, 100%, 60%, 0.5)`; // Cyan to blue
+            }
+
+            update() {
+                const dx = sigma * (this.y - this.x) * dt;
+                const dy = (this.x * (rho - this.z) - this.y) * dt;
+                const dz = (this.x * this.y - beta * this.z) * dt;
+
+                this.x += dx;
+                this.y += dy;
+                this.z += dz;
+            }
+
+            draw() {
+                // Projection from 3D to 2D
+                const scale = Math.min(width, height) / 60;
+                
+                // Add a slow rotation around the Y axis
+                const time = Date.now() * 0.0005;
+                const cosT = Math.cos(time);
+                const sinT = Math.sin(time);
+                
+                const rx = this.x * cosT - this.y * sinT;
+                const ry = this.x * sinT + this.y * cosT;
+                
+                const screenX = width / 2 + rx * scale;
+                const screenY = height / 2 - this.z * scale + (25 * scale); // Offset Z so it centers
+                
+                ctx.fillStyle = this.color;
+                ctx.fillRect(screenX, screenY, 1, 1);
+            }
+        }
+
+        for(let i=0; i<8000; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            // Motion blur fade
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Run multiple physics steps per frame for speed
+            for(let step=0; step<3; step++) {
+                for(let i=0; i<particles.length; i++) {
+                    particles[i].update();
+                }
+            }
+            
+            // Draw once per frame
+            for(let i=0; i<particles.length; i++) {
+                particles[i].draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / AUTOPHAGIC GARBAGE COLLECTION</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #030105;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #phage-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 1;
+            text-align: left;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(255, 50, 100, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 50, 100, 0.8);
+            margin: 0;
+        }
+        
+        .hud {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="phage-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">BIOLOGICAL MEMORY RECYCLING</div>
+        <h1 class="entropy-core">Autophagic Phage</h1>
+        <div class="hud">
+            DEAD STRUCTURES: <span id="node-count">0</span><br>
+            ACTIVE PHAGES: <span id="phage-count">0</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('phage-canvas');
+        const ctx = canvas.getContext('2d');
+        const nodeCountEl = document.getElementById('node-count');
+        const phageCountEl = document.getElementById('phage-count');
+
+        let width, height;
+        let graph = [];
+        let edges = [];
+        let phages = [];
+        let dust = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Build a massive, intricate network
+        function buildNetwork() {
+            graph = [];
+            edges = [];
+            phages = [];
+            dust = [];
+            
+            const numNodes = 400;
+            
+            // Generate nodes
+            for(let i=0; i<numNodes; i++) {
+                graph.push({
+                    id: i,
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    connections: []
+                });
+            }
+            
+            // Connect nearest neighbors to form a web
+            for(let i=0; i<numNodes; i++) {
+                let distances = [];
+                for(let j=0; j<numNodes; j++) {
+                    if (i === j) continue;
+                    const dx = graph[i].x - graph[j].x;
+                    const dy = graph[i].y - graph[j].y;
+                    distances.push({ id: j, distSq: dx*dx + dy*dy });
+                }
+                distances.sort((a, b) => a.distSq - b.distSq);
+                
+                // Connect to 3 nearest
+                for(let k=0; k<3; k++) {
+                    const targetId = distances[k].id;
+                    if (!graph[i].connections.includes(targetId)) {
+                        graph[i].connections.push(targetId);
+                        edges.push({
+                            n1: i,
+                            n2: targetId,
+                            alive: true
+                        });
+                    }
+                }
+            }
+            
+            // Spawn initial phages
+            for(let i=0; i<5; i++) {
+                const startNode = Math.floor(Math.random() * numNodes);
+                phages.push(new Phage(startNode));
+            }
+        }
+
+        class Phage {
+            constructor(currentNodeId) {
+                this.currentNode = graph[currentNodeId];
+                this.targetNode = null;
+                this.x = this.currentNode.x;
+                this.y = this.currentNode.y;
+                this.speed = 4;
+                this.energy = 100;
+                this.dead = false;
+                this.pickTarget();
+            }
+
+            pickTarget() {
+                // Find an edge connected to currentNode that is still alive
+                let validEdges = edges.filter(e => e.alive && (e.n1 === this.currentNode.id || e.n2 === this.currentNode.id));
+                
+                if (validEdges.length > 0) {
+                    // Pick random valid edge
+                    const edge = validEdges[Math.floor(Math.random() * validEdges.length)];
+                    this.targetNode = graph[edge.n1 === this.currentNode.id ? edge.n2 : edge.n1];
+                    this.currentEdge = edge;
+                } else {
+                    // Node is fully consumed, phage starves and dies
+                    this.dead = true;
+                }
+            }
+
+            update() {
+                if (this.dead) return;
+
+                const dx = this.targetNode.x - this.x;
+                const dy = this.targetNode.y - this.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < this.speed) {
+                    // Reached node
+                    this.x = this.targetNode.x;
+                    this.y = this.targetNode.y;
+                    this.currentNode = this.targetNode;
+                    
+                    // Consume the edge
+                    if (this.currentEdge) {
+                        this.currentEdge.alive = false;
+                        
+                        // Spawn data dust
+                        for(let i=0; i<10; i++) {
+                            dust.push(new Dust(this.x, this.y));
+                        }
+                        
+                        // Small chance to replicate
+                        if (Math.random() < 0.1 && phages.length < 50) {
+                            phages.push(new Phage(this.currentNode.id));
+                        }
+                    }
+                    
+                    this.pickTarget();
+                } else {
+                    // Move
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+
+            draw() {
+                if (this.dead) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#FF3264';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#FF3264';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Dust {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2 - 1; // Drift up
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(100, 255, 200, ${this.life})`;
+                ctx.fillRect(this.x, this.y, 2, 2);
+            }
+        }
+
+        buildNetwork();
+
+        function animate() {
+            ctx.fillStyle = '#030105';
+            ctx.fillRect(0, 0, width, height);
+
+            let aliveEdges = 0;
+
+            // Draw dead network
+            ctx.lineWidth = 0.5;
+            for(let i=0; i<edges.length; i++) {
+                if (edges[i].alive) {
+                    aliveEdges++;
+                    const n1 = graph[edges[i].n1];
+                    const n2 = graph[edges[i].n2];
+                    ctx.beginPath();
+                    ctx.moveTo(n1.x, n1.y);
+                    ctx.lineTo(n2.x, n2.y);
+                    ctx.strokeStyle = 'rgba(50, 60, 100, 0.3)';
+                    ctx.stroke();
+                }
+            }
+
+            // Draw nodes
+            for(let i=0; i<graph.length; i++) {
+                ctx.fillStyle = 'rgba(50, 60, 100, 0.5)';
+                ctx.fillRect(graph[i].x - 1, graph[i].y - 1, 2, 2);
+            }
+
+            // Update dust
+            for(let i=dust.length-1; i>=0; i--) {
+                dust[i].update();
+                dust[i].draw();
+                if (dust[i].life <= 0) dust.splice(i, 1);
+            }
+
+            // Update phages
+            for(let i=phages.length-1; i>=0; i--) {
+                phages[i].update();
+                phages[i].draw();
+                if (phages[i].dead) phages.splice(i, 1);
+            }
+
+            // HUD
+            nodeCountEl.textContent = aliveEdges;
+            phageCountEl.textContent = phages.length;
+
+            // Reset loop if fully consumed
+            if (aliveEdges === 0 && dust.length === 0) {
+                setTimeout(buildNetwork, 1000);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

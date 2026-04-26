@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / ACOUSTIC CYMATICS</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #fff; }
+        canvas { position: absolute; top: 0; left: 0; }
+        .hud { position: absolute; top: 20px; left: 20px; z-index: 10; color: #0FF; text-shadow: 0 0 10px #0FF; }
+    </style>
+</head>
+<body>
+    <div class="hud">CYMATIC RESONANCE (n, m) = <span id="freq"></span></div>
+    <canvas id="c"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        const freqEl = document.getElementById('freq');
+        let w, h;
+        const particles = [];
+        let n = 2, m = 3;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for(let i=0; i<15000; i++) {
+            particles.push({x: Math.random()*w, y: Math.random()*h, vx: 0, vy: 0});
+        }
+
+        // Chladni 2D plate equation
+        function chladni(x, y, n, m) {
+            // Map pixel to -1..1
+            const nx = (x / w) * 2 - 1;
+            const ny = (y / h) * 2 - 1;
+            const pi = Math.PI;
+            // z = a * sin(n*pi*x)*sin(m*pi*y) + b * sin(m*pi*x)*sin(n*pi*y)
+            return Math.sin(n*pi*nx) * Math.sin(m*pi*ny) + Math.sin(m*pi*nx) * Math.sin(n*pi*ny);
+        }
+
+        setInterval(() => {
+            n = Math.floor(Math.random() * 5) + 1;
+            m = Math.floor(Math.random() * 5) + 1;
+            freqEl.textContent = `(${n}, ${m})`;
+            // Randomize slightly
+            for(let p of particles) {
+                p.vx += (Math.random()-0.5)*10;
+                p.vy += (Math.random()-0.5)*10;
+            }
+        }, 4000);
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0,0,w,h);
+
+            ctx.fillStyle = '#0FF';
+            for(let p of particles) {
+                // gradient descent towards nodes (where chladni == 0)
+                const eps = 2.0;
+                const v = Math.abs(chladni(p.x, p.y, n, m));
+                const vx = Math.abs(chladni(p.x + eps, p.y, n, m));
+                const vy = Math.abs(chladni(p.x, p.y + eps, n, m));
+                
+                const dx = (vx - v) / eps;
+                const dy = (vy - v) / eps;
+                
+                p.vx -= dx * 10;
+                p.vy -= dy * 10;
+                p.vx *= 0.9;
+                p.vy *= 0.9;
+                
+                // Brownian motion to keep them from getting totally stuck
+                p.vx += (Math.random()-0.5)*0.5;
+                p.vy += (Math.random()-0.5)*0.5;
+
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if(p.x < 0 || p.x > w) { p.x = Math.random()*w; p.vx=0; }
+                if(p.y < 0 || p.y > h) { p.y = Math.random()*h; p.vy=0; }
+
+                ctx.fillRect(p.x, p.y, 1, 1);
+            }
+            requestAnimationFrame(animate);
+        }
+        freqEl.textContent = `(${n}, ${m})`;
+        animate();
+    </script>
+</body>
+</html>

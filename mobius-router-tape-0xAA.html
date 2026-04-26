@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / MÖBIUS ROUTER TAPE</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #010103; overflow: hidden; font-family: monospace; color: #fff; }
+        canvas { position: absolute; top: 0; left: 0; }
+        .hud { position: absolute; top: 20px; left: 20px; z-index: 10; color: #F0F; text-shadow: 0 0 10px #F0F; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="hud">A37: STRANGE LOOP (MÖBIUS TOPOLOGY)</div>
+    <canvas id="c"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let time = 0;
+        
+        function project(x, y, z) {
+            const fov = 400;
+            const distance = 4;
+            const zOff = z + distance;
+            const px = (x * fov) / zOff + w/2;
+            const py = (y * fov) / zOff + h/2;
+            return {px, py, scale: fov/zOff};
+        }
+
+        function animate() {
+            ctx.fillStyle = '#010103';
+            ctx.fillRect(0,0,w,h);
+            time += 0.01;
+
+            const R = 1.5; // Radius
+            const w_half = 0.5; // Half-width of strip
+
+            const points = [];
+
+            for(let u=0; u<Math.PI*2; u+=0.05) {
+                for(let v=-w_half; v<=w_half; v+=0.1) {
+                    // Mobius parametric
+                    let x = (R + v * Math.cos(u/2)) * Math.cos(u);
+                    let y = (R + v * Math.cos(u/2)) * Math.sin(u);
+                    let z = v * Math.sin(u/2);
+                    
+                    // Rotate
+                    const cosT = Math.cos(time);
+                    const sinT = Math.sin(time);
+                    
+                    let x1 = x * cosT - z * sinT;
+                    let z1 = x * sinT + z * cosT;
+                    
+                    let y1 = y * Math.cos(time*0.5) - z1 * Math.sin(time*0.5);
+                    let z2 = y * Math.sin(time*0.5) + z1 * Math.cos(time*0.5);
+
+                    const {px, py, scale} = project(x1, y1, z2);
+                    points.push({px, py, scale, u, v});
+                }
+            }
+
+            // Depth sort
+            points.sort((a,b) => a.scale - b.scale);
+
+            for(let p of points) {
+                ctx.fillStyle = `hsla(${(p.u / (Math.PI*2)) * 360}, 100%, 60%, ${0.2 * p.scale})`;
+                ctx.beginPath();
+                ctx.arc(p.px, p.py, p.scale * 0.05, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // Draw data packets running along it
+            const data_u = (time * 2) % (Math.PI * 4); // 4 PI to make a full loop
+            let dx = (R + 0 * Math.cos(data_u/2)) * Math.cos(data_u);
+            let dy = (R + 0 * Math.cos(data_u/2)) * Math.sin(data_u);
+            let dz = 0 * Math.sin(data_u/2);
+            
+            let dx1 = dx * Math.cos(time) - dz * Math.sin(time);
+            let dz1 = dx * Math.sin(time) + dz * Math.cos(time);
+            let dy1 = dy * Math.cos(time*0.5) - dz1 * Math.sin(time*0.5);
+            let dz2 = dy * Math.sin(time*0.5) + dz1 * Math.cos(time*0.5);
+
+            const dp = project(dx1, dy1, dz2);
+            ctx.fillStyle = '#FFF';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#FFF';
+            ctx.beginPath();
+            ctx.arc(dp.px, dp.py, dp.scale * 0.2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

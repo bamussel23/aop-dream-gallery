@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / NON-EUCLIDEAN LABYRINTH</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #030408;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #maze-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            z-index: 1;
+            text-align: left;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(200, 100, 255, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(200, 100, 255, 0.8);
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="maze-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">TORUS / MÖBIUS TOPOLOGY</div>
+        <h1 class="entropy-core">Non-Euclidean Labyrinth</h1>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('maze-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        const CELL_SIZE = 40;
+        let cols, rows;
+        let grid = [];
+        let paths = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            
+            // Adjust to align to grid
+            cols = Math.ceil(width / CELL_SIZE) + 2; // Extra for wrap padding
+            rows = Math.ceil(height / CELL_SIZE) + 2;
+            
+            generateMaze();
+        }
+
+        window.addEventListener('resize', resize);
+
+        class Cell {
+            constructor(i, j) {
+                this.i = i;
+                this.j = j;
+                this.walls = [true, true, true, true]; // top, right, bottom, left
+                this.visited = false;
+            }
+            
+            // Modulo math for torus wrapping
+            getNeighbor(di, dj) {
+                let ni = (this.i + di + cols) % cols;
+                let nj = (this.j + dj + rows) % rows;
+                return grid[ni + nj * cols];
+            }
+        }
+
+        function generateMaze() {
+            grid = [];
+            paths = [];
+            for(let j=0; j<rows; j++) {
+                for(let i=0; i<cols; i++) {
+                    grid.push(new Cell(i, j));
+                }
+            }
+            
+            // Randomized DFS with wrapping
+            let current = grid[0];
+            current.visited = true;
+            let stack = [current];
+            
+            while(stack.length > 0) {
+                let current = stack.pop();
+                
+                let neighbors = [];
+                let top = current.getNeighbor(0, -1);
+                let right = current.getNeighbor(1, 0);
+                let bottom = current.getNeighbor(0, 1);
+                let left = current.getNeighbor(-1, 0);
+                
+                if(top && !top.visited) neighbors.push({cell: top, dir: 'top'});
+                if(right && !right.visited) neighbors.push({cell: right, dir: 'right'});
+                if(bottom && !bottom.visited) neighbors.push({cell: bottom, dir: 'bottom'});
+                if(left && !left.visited) neighbors.push({cell: left, dir: 'left'});
+                
+                if (neighbors.length > 0) {
+                    stack.push(current);
+                    let r = Math.floor(Math.random() * neighbors.length);
+                    let next = neighbors[r];
+                    
+                    // Remove walls
+                    if (next.dir === 'top') { current.walls[0] = false; next.cell.walls[2] = false; }
+                    if (next.dir === 'right') { current.walls[1] = false; next.cell.walls[3] = false; }
+                    if (next.dir === 'bottom') { current.walls[2] = false; next.cell.walls[0] = false; }
+                    if (next.dir === 'left') { current.walls[3] = false; next.cell.walls[1] = false; }
+                    
+                    next.cell.visited = true;
+                    stack.push(next.cell);
+                }
+            }
+            
+            // Spawn pathfinders
+            for(let i=0; i<20; i++) {
+                paths.push(new Pathfinder());
+            }
+        }
+
+        class Pathfinder {
+            constructor() {
+                this.x = Math.floor(Math.random() * cols);
+                this.y = Math.floor(Math.random() * rows);
+                this.targetX = this.x;
+                this.targetY = this.y;
+                this.progress = 1.0;
+                this.speed = 0.05 + Math.random() * 0.1;
+                this.color = `hsla(${Math.random() * 60 + 240}, 100%, 70%, 0.8)`; // Purples/Blues
+                this.history = [];
+            }
+
+            update() {
+                if (this.progress >= 1.0) {
+                    this.progress = 0.0;
+                    this.x = this.targetX;
+                    this.y = this.targetY;
+                    this.history.push({x: this.x, y: this.y});
+                    if(this.history.length > 30) this.history.shift();
+
+                    let cell = grid[this.x + this.y * cols];
+                    let options = [];
+                    if (!cell.walls[0]) options.push({dx: 0, dy: -1});
+                    if (!cell.walls[1]) options.push({dx: 1, dy: 0});
+                    if (!cell.walls[2]) options.push({dx: 0, dy: 1});
+                    if (!cell.walls[3]) options.push({dx: -1, dy: 0});
+                    
+                    if (options.length > 0) {
+                        let move = options[Math.floor(Math.random() * options.length)];
+                        // Wrap coordinates instantly
+                        this.targetX = (this.x + move.dx + cols) % cols;
+                        this.targetY = (this.y + move.dy + rows) % rows;
+                    } else {
+                        this.progress = 1.0; // Stuck (shouldn't happen in a perfect maze)
+                    }
+                } else {
+                    this.progress += this.speed;
+                }
+            }
+
+            draw(camX, camY) {
+                // If wrapping across the screen, don't interpolate visual position
+                let drawX, drawY;
+                if (Math.abs(this.targetX - this.x) > 1 || Math.abs(this.targetY - this.y) > 1) {
+                    drawX = this.x;
+                    drawY = this.y;
+                } else {
+                    drawX = this.x + (this.targetX - this.x) * this.progress;
+                    drawY = this.y + (this.targetY - this.y) * this.progress;
+                }
+                
+                // Add infinite tiling wrap visual
+                const px = ((drawX * CELL_SIZE + CELL_SIZE/2) - camX + width * 2) % width;
+                const py = ((drawY * CELL_SIZE + CELL_SIZE/2) - camY + height * 2) % height;
+
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        resize();
+        
+        let cameraX = 0;
+        let cameraY = 0;
+
+        function animate() {
+            ctx.fillStyle = '#030408';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Move camera continuously to show infinite scroll
+            cameraX += 0.5;
+            cameraY += 0.3;
+
+            // Draw maze lines (tiled infinitely by wrapping)
+            ctx.strokeStyle = 'rgba(100, 150, 255, 0.15)';
+            ctx.lineWidth = 2;
+            
+            for(let j=0; j<rows; j++) {
+                for(let i=0; i<cols; i++) {
+                    let cell = grid[i + j * cols];
+                    
+                    // Calculate visual position with camera offset and wrap
+                    let px = ((i * CELL_SIZE) - cameraX % CELL_SIZE + width) % width;
+                    let py = ((j * CELL_SIZE) - cameraY % CELL_SIZE + height) % height;
+                    
+                    // To avoid lines drawing across the whole screen when they wrap, we skip drawing if they are at the very edge
+                    if (px > width - CELL_SIZE || py > height - CELL_SIZE) continue;
+
+                    if (cell.walls[0]) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + CELL_SIZE, py); ctx.stroke(); }
+                    if (cell.walls[1]) { ctx.beginPath(); ctx.moveTo(px + CELL_SIZE, py); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); ctx.stroke(); }
+                    if (cell.walls[2]) { ctx.beginPath(); ctx.moveTo(px, py + CELL_SIZE); ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE); ctx.stroke(); }
+                    if (cell.walls[3]) { ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + CELL_SIZE); ctx.stroke(); }
+                }
+            }
+
+            for(let i=0; i<paths.length; i++) {
+                paths[i].update();
+                paths[i].draw(cameraX, cameraY);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

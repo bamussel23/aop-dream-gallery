@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / BIFURCATION TREE</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #fff; }
+        canvas { position: absolute; top: 0; left: 0; }
+        .hud { position: absolute; top: 20px; right: 20px; z-index: 10; color: #0F0; text-shadow: 0 0 10px #0F0; font-size: 14px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="hud">FEIGENBAUM CASCADE<br>PERIOD-DOUBLING CHAOS</div>
+    <canvas id="c"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let r = 2.5; // Logistic map r parameter
+
+        function drawTree(x, y, len, angle, gen, maxGen, currentR) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            const nx = x + Math.cos(angle) * len;
+            const ny = y + Math.sin(angle) * len;
+            ctx.lineTo(nx, ny);
+            
+            // As r increases, branches get more chaotic and colorful
+            const chaos = (currentR - 3.0) > 0 ? (currentR - 3.0) : 0;
+            ctx.strokeStyle = `hsla(${gen * 30 + chaos * 100}, 100%, 60%, ${1 - gen/maxGen})`;
+            ctx.lineWidth = Math.max(0.5, (maxGen - gen) * 0.5);
+            ctx.stroke();
+
+            if (gen < maxGen) {
+                // Splitting angle determined by chaotic r
+                const split = 0.3 + chaos * 0.5 * (Math.random() - 0.5);
+                drawTree(nx, ny, len * 0.75, angle - split, gen + 1, maxGen, currentR);
+                drawTree(nx, ny, len * 0.75, angle + split, gen + 1, maxGen, currentR);
+            } else if (chaos > 0.5) {
+                // Pure chaos at the tips
+                ctx.fillStyle = `hsla(${Math.random()*360}, 100%, 60%, 0.8)`;
+                ctx.fillRect(nx + (Math.random()-0.5)*chaos*50, ny + (Math.random()-0.5)*chaos*50, 2, 2);
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0,0,w,h);
+
+            // r goes from 2.5 (stable) to 4.0 (pure chaos)
+            r += 0.005;
+            if(r > 4.1) r = 2.5;
+
+            // Map r to number of generations (bifurcations)
+            let maxGen = 1;
+            if (r > 3.0) maxGen = 2;
+            if (r > 3.44) maxGen = 4;
+            if (r > 3.54) maxGen = 8;
+            if (r > 3.56) maxGen = 10;
+            if (r > 3.57) maxGen = 12; // onset of chaos
+
+            drawTree(w/2, h, h * 0.25, -Math.PI/2, 0, maxGen, r);
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / TESSERACT SHADOW</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #fff; }
+        canvas { position: absolute; top: 0; left: 0; }
+        .hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10; color: #00FFCC; text-shadow: 0 0 10px #00FFCC; font-size: 24px; letter-spacing: 10px; }
+    </style>
+</head>
+<body>
+    <div class="hud">DIMENSIONAL BLEED</div>
+    <canvas id="c"></canvas>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 16 vertices of a hypercube (Tesseract)
+        let vertices = [];
+        for (let i = 0; i < 16; i++) {
+            vertices.push({
+                x: (i & 1) ? 1 : -1,
+                y: (i & 2) ? 1 : -1,
+                z: (i & 4) ? 1 : -1,
+                w: (i & 8) ? 1 : -1
+            });
+        }
+
+        let angle = 0;
+
+        function connect(i, j, projected) {
+            ctx.beginPath();
+            ctx.moveTo(projected[i].x, projected[i].y);
+            ctx.lineTo(projected[j].x, projected[j].y);
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0,0,w,h);
+            
+            angle += 0.01;
+
+            let projected = [];
+
+            for (let v of vertices) {
+                // Rotation in XW plane
+                let x = v.x * Math.cos(angle) - v.w * Math.sin(angle);
+                let w_new = v.x * Math.sin(angle) + v.w * Math.cos(angle);
+                let y = v.y;
+                let z = v.z;
+
+                // Rotation in YZ plane
+                let y2 = y * Math.cos(angle*0.5) - z * Math.sin(angle*0.5);
+                let z2 = y * Math.sin(angle*0.5) + z * Math.cos(angle*0.5);
+
+                // 4D to 3D projection
+                let distance = 3;
+                let w_scale = 1 / (distance - w_new);
+                
+                let x3d = x * w_scale;
+                let y3d = y2 * w_scale;
+                let z3d = z2 * w_scale;
+
+                // 3D to 2D projection
+                let z_scale = 400 / (2 - z3d);
+                let px = w/2 + x3d * z_scale;
+                let py = h/2 + y3d * z_scale;
+
+                projected.push({x: px, y: py});
+                
+                // Draw vertices
+                ctx.beginPath();
+                ctx.arc(px, py, 4, 0, Math.PI*2);
+                ctx.fillStyle = '#00FFCC';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00FFCC';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Connect edges (edges exist where vertices differ by exactly one coordinate)
+            for (let i = 0; i < 16; i++) {
+                for (let j = i + 1; j < 16; j++) {
+                    // Check if they differ by exactly 1 bit
+                    let diff = i ^ j;
+                    if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
+                        connect(i, j, projected);
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

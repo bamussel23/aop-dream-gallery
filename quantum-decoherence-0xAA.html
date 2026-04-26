@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / QUANTUM DECOHERENCE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #020205;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 1;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(0, 212, 255, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            transition: color 0.5s ease;
+        }
+
+        .entropy-core {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.8);
+            margin: 0;
+            transition: text-shadow 0.5s ease;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #00FF88;
+        }
+
+        .glitch-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0);
+            pointer-events: none;
+            z-index: 2;
+            transition: background 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glitch-flash" id="flash"></div>
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text" id="axiom">Z3_SAT / PERFECT ORDER</div>
+        <h1 class="entropy-core" id="title">Decoherence Matrix</h1>
+        <div id="status">STATE: CRYSTALLIZED</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('status');
+        const axiomEl = document.getElementById('axiom');
+        const titleEl = document.getElementById('title');
+        const flashEl = document.getElementById('flash');
+
+        let width, height;
+        let nodes = [];
+        const spacing = 40;
+        
+        let cycleState = 'CRYSTALLIZED'; // CRYSTALLIZED -> DECOHERING -> CHAOS -> HEALING
+        let stateTimer = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initLattice();
+        }
+
+        window.addEventListener('resize', resize);
+
+        class Node {
+            constructor(originX, originY) {
+                this.originX = originX;
+                this.originY = originY;
+                this.x = originX;
+                this.y = originY;
+                this.vx = 0;
+                this.vy = 0;
+                this.color = 'rgba(0, 212, 255, 0.8)';
+                this.size = 2;
+            }
+
+            update(state) {
+                if (state === 'CRYSTALLIZED') {
+                    this.x = this.originX;
+                    this.y = this.originY;
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.color = 'rgba(0, 212, 255, 0.8)';
+                } 
+                else if (state === 'DECOHERING') {
+                    // Stray entropy strikes
+                    if (Math.random() < 0.01) {
+                        this.vx += (Math.random() - 0.5) * 5;
+                        this.vy += (Math.random() - 0.5) * 5;
+                    }
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    // Introduce drift
+                    this.vx *= 1.02;
+                    this.vy *= 1.02;
+                    this.color = 'rgba(255, 85, 119, 0.9)';
+                }
+                else if (state === 'CHAOS') {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    // Cap velocity
+                    this.vx *= 0.99;
+                    this.vy *= 0.99;
+                    // Wrap around
+                    if(this.x < 0) this.x = width;
+                    if(this.x > width) this.x = 0;
+                    if(this.y < 0) this.y = height;
+                    if(this.y > height) this.y = 0;
+                    
+                    this.color = `rgba(255, ${Math.random()*100+100}, 0, 0.6)`;
+                }
+                else if (state === 'HEALING') {
+                    // Violent snap back to origin
+                    const dx = this.originX - this.x;
+                    const dy = this.originY - this.y;
+                    
+                    this.vx += dx * 0.05;
+                    this.vy += dy * 0.05;
+                    
+                    this.vx *= 0.8; // Dampening
+                    this.vy *= 0.8;
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    this.color = 'rgba(0, 255, 136, 0.9)';
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        function initLattice() {
+            nodes = [];
+            const cols = Math.floor(width / spacing);
+            const rows = Math.floor(height / spacing);
+            const offsetX = (width - (cols * spacing)) / 2;
+            const offsetY = (height - (rows * spacing)) / 2;
+
+            for (let i = 0; i <= cols; i++) {
+                for (let j = 0; j <= rows; j++) {
+                    // Add perspective/distortion (simulate 3D projection onto 2D plane)
+                    const distFromCenterX = (i * spacing + offsetX) - (width/2);
+                    const distFromCenterY = (j * spacing + offsetY) - (height/2);
+                    
+                    // Sphereical projection distortion
+                    const dist = Math.sqrt(distFromCenterX*distFromCenterX + distFromCenterY*distFromCenterY);
+                    const factor = 1 + (dist * 0.0005);
+
+                    const ox = (width/2) + (distFromCenterX * factor);
+                    const oy = (height/2) + (distFromCenterY * factor);
+                    
+                    nodes.push(new Node(ox, oy));
+                }
+            }
+        }
+
+        function triggerFlash(color) {
+            flashEl.style.background = color;
+            setTimeout(() => {
+                flashEl.style.background = 'rgba(255,255,255,0)';
+            }, 50);
+        }
+
+        function manageState() {
+            stateTimer++;
+
+            if (cycleState === 'CRYSTALLIZED' && stateTimer > 200) {
+                cycleState = 'DECOHERING';
+                stateTimer = 0;
+                statusEl.textContent = 'STATE: ENTROPY CASCADE';
+                statusEl.style.color = '#FF5577';
+                axiomEl.textContent = 'Z3_UNSAT / FRACTURE';
+                axiomEl.style.color = 'rgba(255, 85, 119, 0.6)';
+                titleEl.style.textShadow = '0 0 15px rgba(255, 85, 119, 0.8)';
+                triggerFlash('rgba(255, 85, 119, 0.2)');
+            } 
+            else if (cycleState === 'DECOHERING' && stateTimer > 150) {
+                cycleState = 'CHAOS';
+                stateTimer = 0;
+                statusEl.textContent = 'STATE: MAXIMUM ENTROPY';
+                statusEl.style.color = '#FF8800';
+            }
+            else if (cycleState === 'CHAOS' && stateTimer > 300) {
+                cycleState = 'HEALING';
+                stateTimer = 0;
+                statusEl.textContent = 'STATE: AUTONOMOUS HEALING';
+                statusEl.style.color = '#00FF88';
+                axiomEl.textContent = 'REAPPLYING CONSTRAINTS';
+                axiomEl.style.color = 'rgba(0, 255, 136, 0.6)';
+                titleEl.style.textShadow = '0 0 15px rgba(0, 255, 136, 0.8)';
+                triggerFlash('rgba(0, 255, 136, 0.3)');
+            }
+            else if (cycleState === 'HEALING' && stateTimer > 100) {
+                cycleState = 'CRYSTALLIZED';
+                stateTimer = 0;
+                statusEl.textContent = 'STATE: CRYSTALLIZED';
+                statusEl.style.color = '#00D4FF';
+                axiomEl.textContent = 'Z3_SAT / PERFECT ORDER';
+                axiomEl.style.color = 'rgba(0, 212, 255, 0.6)';
+                titleEl.style.textShadow = '0 0 15px rgba(0, 212, 255, 0.8)';
+                triggerFlash('rgba(0, 212, 255, 0.2)');
+            }
+        }
+
+        function animate() {
+            manageState();
+
+            // Motion blur trail
+            ctx.fillStyle = cycleState === 'CHAOS' ? 'rgba(2, 2, 5, 0.3)' : 'rgba(2, 2, 5, 0.8)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw connecting lines if Crystallized or Healing
+            if (cycleState === 'CRYSTALLIZED' || cycleState === 'HEALING') {
+                ctx.strokeStyle = cycleState === 'HEALING' ? 'rgba(0, 255, 136, 0.1)' : 'rgba(0, 212, 255, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                
+                const cols = Math.floor(width / spacing) + 1;
+                const rows = Math.floor(height / spacing) + 1;
+                
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const idx = i * (rows + 1) + j;
+                        const node = nodes[idx];
+                        if (!node) continue;
+                        
+                        // Connect Right
+                        if (i < cols && nodes[idx + (rows + 1)]) {
+                            ctx.moveTo(node.x, node.y);
+                            ctx.lineTo(nodes[idx + (rows + 1)].x, nodes[idx + (rows + 1)].y);
+                        }
+                        // Connect Down
+                        if (j < rows && nodes[idx + 1]) {
+                            ctx.moveTo(node.x, node.y);
+                            ctx.lineTo(nodes[idx + 1].x, nodes[idx + 1].y);
+                        }
+                    }
+                }
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].update(cycleState);
+                nodes[i].draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        resize();
+        animate();
+    </script>
+</body>
+</html>

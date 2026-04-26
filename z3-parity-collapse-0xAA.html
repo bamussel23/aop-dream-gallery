@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / Z3 PARITY GATE COLLAPSE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #010103;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #gate-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            z-index: 1;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(255, 100, 0, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            transition: color 0.2s;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 100, 0, 0.8);
+            margin: 0;
+            transition: text-shadow 0.2s;
+        }
+        
+        .hud {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+        
+        #pressure-bar {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 10px;
+            float: right;
+        }
+        
+        #pressure-fill {
+            height: 100%;
+            background: #00FF88;
+            width: 0%;
+            transition: width 0.1s, background 0.1s;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gate-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text" id="status-txt">Z3_SAT / GATE HOLDING</div>
+        <h1 class="entropy-core" id="title-txt">Parity Collapse</h1>
+        <div class="hud">
+            ENTROPY PRESSURE (κ)<br>
+            <div id="pressure-bar"><div id="pressure-fill"></div></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gate-canvas');
+        const ctx = canvas.getContext('2d');
+        const fillEl = document.getElementById('pressure-fill');
+        const statusTxt = document.getElementById('status-txt');
+        const titleTxt = document.getElementById('title-txt');
+
+        let width, height;
+        let particles = [];
+        let gateX;
+        let pressure = 0;
+        let broken = false;
+        
+        const P_COUNT = 3000;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            gateX = width * 0.4;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.x = Math.random() * width; // scatter initially
+            }
+
+            reset() {
+                this.x = -Math.random() * 200;
+                this.y = Math.random() * height;
+                this.vx = Math.random() * 8 + 2;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.color = `hsla(${Math.random() * 60 + 10}, 100%, 60%, 0.8)`; // chaotic red/orange
+                this.filtered = false;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (!broken && this.x > gateX) {
+                    if (!this.filtered) {
+                        // Pass through gate: mathematical filtering
+                        this.vx = 15; // uniform speed
+                        this.vy = 0;  // perfect horizontal order
+                        // snap to mathematical grid lane
+                        this.y = Math.round(this.y / 20) * 20;
+                        this.color = 'rgba(0, 255, 136, 0.9)'; // ordered cyan/green
+                        this.filtered = true;
+                        pressure += 0.002; // pressure builds
+                    }
+                }
+
+                // If broken, everything past the gate becomes chaotic again
+                if (broken && this.x > gateX && this.filtered) {
+                    this.filtered = false;
+                    this.vx = Math.random() * 15 + 5;
+                    this.vy = (Math.random() - 0.5) * 20;
+                    this.color = `hsla(${Math.random() * 360}, 100%, 70%, 0.9)`; // unregulated full spectrum noise
+                }
+
+                if (this.x > width) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                if (this.filtered) {
+                    ctx.fillRect(this.x, this.y, 10, 2); // Ordered dashes
+                } else {
+                    ctx.fillRect(this.x, this.y, Math.random()*4+1, Math.random()*4+1); // chaotic noise
+                }
+            }
+        }
+
+        for(let i=0; i<P_COUNT; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(1, 1, 3, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw Gate
+            if (!broken) {
+                // Gate integrity visuals
+                const integrity = 1 - (pressure / 100);
+                ctx.beginPath();
+                ctx.moveTo(gateX, 0);
+                ctx.lineTo(gateX, height);
+                ctx.strokeStyle = `rgba(0, 255, 136, ${integrity})`;
+                ctx.lineWidth = 4 + (Math.random() * 2 * (pressure/20));
+                ctx.stroke();
+                
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0, 255, 136, 0.5)';
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            } else {
+                // Broken gate
+                ctx.beginPath();
+                ctx.moveTo(gateX, 0);
+                for(let y=0; y<height; y+=50) {
+                    ctx.lineTo(gateX + (Math.random()-0.5)*100, y);
+                }
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // Update UI
+            if (pressure > 100 && !broken) {
+                broken = true;
+                fillEl.style.width = '100%';
+                fillEl.style.background = '#FF0000';
+                statusTxt.textContent = "Z3_UNSAT / GATE BREACHED";
+                statusTxt.style.color = "rgba(255, 0, 0, 0.8)";
+                titleTxt.style.textShadow = "0 0 30px rgba(255, 0, 0, 1)";
+                
+                // Screen flash
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
+            } else if (!broken) {
+                fillEl.style.width = `${pressure}%`;
+                if (pressure > 80) fillEl.style.background = '#FF5500';
+            }
+
+            for(let i=0; i<P_COUNT; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+
+            // Loop reset
+            if (broken && pressure > 250) {
+                broken = false;
+                pressure = 0;
+                statusTxt.textContent = "Z3_SAT / GATE HOLDING";
+                statusTxt.style.color = "rgba(0, 255, 136, 0.6)";
+                fillEl.style.background = '#00FF88';
+                titleTxt.style.textShadow = "0 0 20px rgba(0, 255, 136, 0.8)";
+            }
+            if(broken) pressure += 0.5;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

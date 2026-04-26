@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / THERMODYNAMIC GLASS SPORE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #010305;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #thermo-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            z-index: 1;
+            text-align: right;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(255, 100, 100, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            transition: color 0.5s;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 100, 100, 0.8);
+            margin: 0;
+            transition: text-shadow 0.5s;
+        }
+        
+        .hud {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+        
+        #temp-bar-container {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 10px;
+            float: right;
+        }
+        
+        #temp-bar {
+            height: 100%;
+            background: #FF4444;
+            width: 100%;
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="thermo-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text" id="phase-txt">PHASE: LIQUID CHAOS</div>
+        <h1 class="entropy-core" id="title-txt">Glass Spore</h1>
+        <div class="hud">
+            SYSTEM KINETIC ENERGY (T)<br>
+            <div id="temp-bar-container"><div id="temp-bar"></div></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('thermo-canvas');
+        const ctx = canvas.getContext('2d');
+        const tempBar = document.getElementById('temp-bar');
+        const phaseTxt = document.getElementById('phase-txt');
+        const titleTxt = document.getElementById('title-txt');
+
+        let width, height;
+        let particles = [];
+        const P_COUNT = 800;
+        
+        // Thermodynamic variables
+        let temperature = 1.0; // 1.0 = boiling, 0.0 = absolute zero (crystallized)
+        let coolingRate = 0.002;
+        let gridSize = 30;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 0.5) * 20;
+                this.gridX = 0;
+                this.gridY = 0;
+                this.locked = false;
+            }
+
+            update(T) {
+                if (T > 0.1) {
+                    // Liquid phase
+                    this.locked = false;
+                    
+                    // Thermal velocity jitter
+                    this.vx += (Math.random() - 0.5) * T * 5;
+                    this.vy += (Math.random() - 0.5) * T * 5;
+                    
+                    // Dampen velocity to match Temperature
+                    this.vx *= 0.95;
+                    this.vy *= 0.95;
+                    
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Bounce off walls
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+                } else {
+                    // Crystallization phase (snapping to grid)
+                    if (!this.locked) {
+                        this.gridX = Math.round(this.x / gridSize) * gridSize;
+                        this.gridY = Math.round(this.y / gridSize) * gridSize;
+                        this.locked = true;
+                    }
+                    
+                    // Move towards grid lock
+                    const dx = this.gridX - this.x;
+                    const dy = this.gridY - this.y;
+                    
+                    this.vx += dx * 0.1;
+                    this.vy += dy * 0.1;
+                    
+                    this.vx *= 0.7; // Brittle dampening
+                    this.vy *= 0.7;
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+                }
+            }
+
+            fracture(fx, fy, force) {
+                const dx = this.x - fx;
+                const dy = this.y - fy;
+                const distSq = dx*dx + dy*dy;
+                if (distSq < force * force) {
+                    this.locked = false;
+                    const dist = Math.sqrt(distSq);
+                    const push = (force - dist) / force;
+                    this.vx += (dx / dist) * push * 30;
+                    this.vy += (dy / dist) * push * 30;
+                }
+            }
+        }
+
+        for(let i=0; i<P_COUNT; i++) {
+            particles.push(new Particle());
+        }
+
+        function triggerFracture() {
+            const fx = Math.random() * width;
+            const fy = Math.random() * height;
+            const force = Math.random() * 300 + 100;
+            
+            for(let i=0; i<P_COUNT; i++) {
+                particles[i].fracture(fx, fy, force);
+            }
+            
+            // Thermal spike from breaking bonds
+            temperature += 0.3;
+            if (temperature > 1.0) temperature = 1.0;
+            
+            // Visual shockwave
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillRect(0, 0, width, height);
+            
+            phaseTxt.textContent = "THERMAL STRESS: FRACTURE";
+            phaseTxt.style.color = "#FFFFFF";
+        }
+
+        function animate() {
+            // Cool down
+            if (temperature > 0) {
+                temperature -= coolingRate;
+                if (temperature < 0) temperature = 0;
+            }
+
+            // Update UI
+            tempBar.style.width = `${temperature * 100}%`;
+            
+            let r, g, b;
+            if (temperature > 0.5) {
+                r = 255; g = 100; b = 100; // Red hot
+                phaseTxt.textContent = "PHASE: LIQUID CHAOS";
+                phaseTxt.style.color = `rgba(${r},${g},${b}, 0.6)`;
+                titleTxt.style.textShadow = `0 0 20px rgba(${r},${g},${b}, 0.8)`;
+            } else if (temperature > 0.1) {
+                r = 255; g = 200; b = 100; // Cooling orange
+                phaseTxt.textContent = "PHASE: VISCOUS TRANSITION";
+                phaseTxt.style.color = `rgba(${r},${g},${b}, 0.6)`;
+                titleTxt.style.textShadow = `0 0 20px rgba(${r},${g},${b}, 0.8)`;
+            } else {
+                r = 100; g = 200; b = 255; // Cold glass blue
+                if (phaseTxt.textContent !== "THERMAL STRESS: FRACTURE") {
+                    phaseTxt.textContent = "PHASE: CRYSTALLIZED LATTICE";
+                    phaseTxt.style.color = `rgba(${r},${g},${b}, 0.6)`;
+                }
+                titleTxt.style.textShadow = `0 0 20px rgba(${r},${g},${b}, 0.8)`;
+            }
+            tempBar.style.background = `rgb(${r},${g},${b})`;
+
+            // Clear frame
+            ctx.fillStyle = 'rgba(1, 3, 5, 0.2)'; // Motion blur
+            ctx.fillRect(0, 0, width, height);
+
+            // Update particles
+            for(let i=0; i<P_COUNT; i++) {
+                particles[i].update(temperature);
+            }
+
+            // Render bonds if temperature is low (glass forming)
+            if (temperature < 0.3) {
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                // Only connect particles that are locked to the grid and near each other
+                for(let i=0; i<P_COUNT; i++) {
+                    const p1 = particles[i];
+                    if (!p1.locked) continue;
+                    
+                    for(let j=i+1; j<P_COUNT; j++) {
+                        const p2 = particles[j];
+                        if (!p2.locked) continue;
+                        
+                        const dx = p1.x - p2.x;
+                        const dy = p1.y - p2.y;
+                        const distSq = dx*dx + dy*dy;
+                        
+                        // Bond threshold depends on grid size
+                        if (distSq < (gridSize * 1.5) * (gridSize * 1.5)) {
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                        }
+                    }
+                }
+                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.5 - temperature})`;
+                ctx.stroke();
+            }
+
+            // Draw particles
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+            for(let i=0; i<P_COUNT; i++) {
+                ctx.fillRect(particles[i].x - 1, particles[i].y - 1, 2, 2);
+            }
+
+            // Random thermodynamic fracture due to built up stress in cold glass
+            if (temperature <= 0.05 && Math.random() < 0.005) {
+                triggerFracture();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / COSMIC MEMORY</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300&family=JetBrains+Mono:wght@100&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #010103;
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #cosmic-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+
+        .axiom-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 12px;
+            color: rgba(120, 150, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .entropy-core {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 64px;
+            font-weight: 300;
+            font-style: italic;
+            letter-spacing: 24px;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(100, 150, 255, 0.4);
+            margin: 0;
+            opacity: 0.8;
+            animation: breathe 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(0.98); opacity: 0.5; filter: blur(2px); }
+            100% { transform: scale(1.02); opacity: 0.9; filter: blur(0px); text-shadow: 0 0 50px rgba(150, 200, 255, 0.8); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="cosmic-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">SEED: STELLAR ACCRETION STORAGE</div>
+        <h1 class="entropy-core">Cosmic Memory</h1>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('cosmic-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let memoryNodes = [];
+        let time = 0;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // The black hole / singularity in the center
+        const cx = width / 2;
+        const cy = height / 2;
+
+        class MemoryNode {
+            constructor() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.radius = Math.random() * (width > height ? width : height);
+                this.speed = (Math.random() * 0.002 + 0.0005) * (Math.random() > 0.5 ? 1 : -1);
+                this.size = Math.random() * 1.5 + 0.5;
+                // Encode "memory" as color
+                const colors = [
+                    [200, 220, 255], // Hot young memory
+                    [100, 150, 255], // Stable memory
+                    [255, 150, 100], // Redshifting ancient memory
+                    [50, 50, 100]    // Fading dark memory
+                ];
+                this.baseColor = colors[Math.floor(Math.random() * colors.length)];
+                this.life = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                // Orbital mechanics: closer to center = faster
+                const velocityMultiplier = Math.max(0.1, 500 / (this.radius + 1));
+                this.angle += this.speed * velocityMultiplier;
+                
+                // Slow inward spiral (gravity / data ingestion)
+                this.radius -= 0.1;
+                if (this.radius < 20) {
+                    // Reborn at the edge once consumed
+                    this.radius = (width > height ? width : height);
+                    this.angle = Math.random() * Math.PI * 2;
+                }
+
+                this.life += 0.05;
+                this.x = (width / 2) + Math.cos(this.angle) * this.radius;
+                // Add a tilt to the accretion disk
+                this.y = (height / 2) + Math.sin(this.angle) * this.radius * 0.3;
+            }
+
+            draw() {
+                const alpha = Math.abs(Math.sin(this.life)) * (1 - (this.radius / width));
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.baseColor[0]}, ${this.baseColor[1]}, ${this.baseColor[2]}, ${alpha})`;
+                ctx.fill();
+            }
+        }
+
+        for(let i=0; i<1500; i++) {
+            memoryNodes.push(new MemoryNode());
+        }
+
+        function animate() {
+            time += 0.01;
+            
+            // Subtle motion blur trail
+            ctx.fillStyle = 'rgba(1, 1, 3, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw the singularity horizon (the event horizon of memory)
+            const horizonPulse = Math.sin(time) * 10;
+            const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, 100 + horizonPulse);
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            gradient.addColorStop(0.5, 'rgba(20, 30, 60, 0.5)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(width/2, height/2, 100 + horizonPulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Depth sorting (render back of disk first, then front)
+            memoryNodes.sort((a, b) => {
+                return Math.sin(a.angle) - Math.sin(b.angle);
+            });
+
+            for(let i=0; i<memoryNodes.length; i++) {
+                memoryNodes[i].update();
+                memoryNodes[i].draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

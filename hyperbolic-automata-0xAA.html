@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / HYPERBOLIC AUTOMATA</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #05010A; /* Deep space purple/black */
+            color: #E0E0E0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #poincare-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 1;
+            text-align: left;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 10px;
+            letter-spacing: 6px;
+            color: rgba(200, 100, 255, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .entropy-core {
+            font-size: 24px;
+            font-weight: 100;
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(200, 100, 255, 0.8);
+            margin: 0;
+        }
+        
+        .hud {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="poincare-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">BOUNDARY CONSTRAINT TOPOLOGY</div>
+        <h1 class="entropy-core">Hyperbolic Automata</h1>
+        <div class="hud">GEOMETRY: POINCARÉ DISK<br>POPULATION: <span id="pop-count">0</span><br>ESCAPE VELOCITY: ∞</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('poincare-canvas');
+        const ctx = canvas.getContext('2d');
+        const popEl = document.getElementById('pop-count');
+
+        let width, height, centerX, centerY, diskRadius;
+        let automata = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+            diskRadius = Math.min(width, height) * 0.45;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Automaton {
+            constructor(r, theta, generation) {
+                // Hyperbolic coordinates
+                this.r = r;         // 0 to 1 (fractional distance to boundary)
+                this.theta = theta; // Angle
+                this.generation = generation;
+                
+                this.baseSpeed = 0.005; 
+                this.size = 6;
+                this.life = 0;
+                this.hue = 260 + (generation * 5) % 80; // Purples to magentas
+                this.dead = false;
+            }
+
+            update() {
+                if (this.dead) return;
+
+                // In the Poincaré disk model, Euclidean distance shrinks as r -> 1.
+                // The scaling factor for distance is proportional to (1 - r^2).
+                const scale = 1 - (this.r * this.r);
+                
+                // Move outward
+                this.r += this.baseSpeed * scale;
+                this.life++;
+
+                // If r >= 0.999, it effectively freezes at the boundary
+                if (this.r >= 0.999) {
+                    this.r = 0.999;
+                    // Die and become permanent structure at the edge
+                    this.dead = true;
+                    return;
+                }
+
+                // Split (cellular division) based on hyperbolic area coverage
+                // More space available near the edge in hyperbolic space = higher split rate
+                if (this.life > 20 && Math.random() < 0.02 * (1 / scale) && automata.length < 5000) {
+                    // Split into two children
+                    const angleOffset = (Math.random() * 0.2 + 0.1) * scale;
+                    automata.push(new Automaton(this.r, this.theta + angleOffset, this.generation + 1));
+                    automata.push(new Automaton(this.r, this.theta - angleOffset, this.generation + 1));
+                    this.dead = true;
+                }
+            }
+
+            draw() {
+                const scale = 1 - (this.r * this.r);
+                
+                // Map to Euclidean screen coordinates
+                const x = centerX + Math.cos(this.theta) * this.r * diskRadius;
+                const y = centerY + Math.sin(this.theta) * this.r * diskRadius;
+                
+                // The size shrinks as it approaches the boundary
+                const renderSize = Math.max(0.2, this.size * scale);
+
+                ctx.beginPath();
+                ctx.arc(x, y, renderSize, 0, Math.PI * 2);
+                
+                if (this.dead) {
+                    // Frozen at the edge
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, 0.2)`;
+                } else {
+                    // Active living cell
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, 60%, 0.8)`;
+                    ctx.shadowBlur = 10 * scale;
+                    ctx.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.8)`;
+                }
+                
+                ctx.fill();
+                ctx.shadowBlur = 0; // reset
+            }
+        }
+
+        // Seed the center
+        for(let i=0; i<6; i++) {
+            automata.push(new Automaton(0.01, (Math.PI * 2 / 6) * i, 0));
+        }
+
+        function drawDiskBoundary() {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, diskRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Subtle inner glow
+            const grad = ctx.createRadialGradient(centerX, centerY, diskRadius * 0.95, centerX, centerY, diskRadius);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, 'rgba(200, 100, 255, 0.05)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
+
+        function animate() {
+            // Fade effect for trails
+            ctx.fillStyle = 'rgba(5, 1, 10, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            drawDiskBoundary();
+
+            popEl.textContent = automata.length;
+
+            const len = automata.length;
+            for(let i=0; i<len; i++) {
+                automata[i].update();
+                automata[i].draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>

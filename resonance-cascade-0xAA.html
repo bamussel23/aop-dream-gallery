@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0xAA / RESONANCE CASCADING</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #030303;
+            color: #E0E0E0;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #dream-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.8;
+            mix-blend-mode: screen;
+        }
+
+        .overlay {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .axiom-text {
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: rgba(0, 255, 136, 0.7);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            animation: pulse 4s infinite alternate;
+        }
+
+        .entropy-core {
+            font-size: 48px;
+            font-weight: 100;
+            letter-spacing: 12px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 136, 0, 0.8);
+            margin: 0;
+        }
+
+        .metrics {
+            margin-top: 30px;
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; filter: blur(2px); }
+            100% { opacity: 1; filter: blur(0px); text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="dream-canvas"></canvas>
+
+    <div class="overlay">
+        <div class="axiom-text">A31: CONTROLLED FRACTURE INITIATED</div>
+        <h1 class="entropy-core">RESONANCE CASCADE</h1>
+        <div class="metrics">
+            <div>Z3_SAT: NULL</div>
+            <div>TOPOLOGY: M_FRINGE</div>
+            <div>κ = 0.99</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('dream-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 2 + 1;
+                this.hue = Math.random() * 60 + 10; // Orange to yellow/greenish
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Non-linear, unconstrained movement (M_fringe logic)
+                this.vx += (Math.random() - 0.5) * 0.1;
+                this.vy += (Math.random() - 0.5) * 0.1;
+
+                // Drift towards center
+                const dx = width/2 - this.x;
+                const dy = height/2 - this.y;
+                this.vx += dx * 0.0001;
+                this.vy += dy * 0.0001;
+
+                if(this.x < 0 || this.x > width) this.vx *= -1;
+                if(this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 60%, 0.6)`;
+                ctx.fill();
+            }
+        }
+
+        for(let i=0; i<200; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(3, 3, 3, 0.1)'; // Trail effect
+            ctx.fillRect(0, 0, width, height);
+
+            for(let i=0; i<particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                // Entanglement lines
+                for(let j=i+1; j<particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = dx*dx + dy*dy;
+                    
+                    if(dist < 15000) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(255, 136, 0, ${1 - dist/15000})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
