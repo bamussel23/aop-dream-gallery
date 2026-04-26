@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Impossibility Ring (A30)</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #00FFCC; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #00FFCC; }
+</style>
+</head>
+<body>
+<div id="label">The Impossibility Ring (A30)</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let ps = []; for(let i=0;i<200;i++) ps.push({x:w/2,y:h/2,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10});
+            function loop() {
+                ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0,0,w,h);
+                let cx = w/2, cy = h/2, R = Math.min(w,h)*0.4;
+                ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.strokeStyle='#00FFCC'; ctx.stroke();
+                ps.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    let dx = p.x-cx, dy = p.y-cy, dist = Math.sqrt(dx*dx+dy*dy);
+                    if(dist > R) {
+                        let nx = dx/dist, ny = dy/dist;
+                        let dot = p.vx*nx + p.vy*ny;
+                        p.vx -= 2*dot*nx; p.vy -= 2*dot*ny;
+                        p.x = cx + nx*(R-1); p.y = cy + ny*(R-1);
+                    }
+                    ctx.fillStyle = '#FFF'; ctx.fillRect(p.x, p.y, 2, 2);
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Swarm Cartography</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #00FF66; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #00FF66; }
+</style>
+</head>
+<body>
+<div id="label">Swarm Cartography</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let t=0;
+            let data = Array.from({length:200}, ()=>({x:Math.random()*w, y:Math.random()*h}));
+            function loop() {
+                ctx.fillStyle='rgba(0,10,0,0.1)'; ctx.fillRect(0,0,w,h);
+                t+=0.02; let a = t%(Math.PI*2);
+                ctx.beginPath(); ctx.moveTo(w/2,h/2); ctx.lineTo(w/2+Math.cos(a)*w, h/2+Math.sin(a)*w);
+                ctx.strokeStyle='rgba(0,255,100,0.8)'; ctx.lineWidth=2; ctx.stroke();
+                
+                data.forEach(d => {
+                    let ang = Math.atan2(d.y-h/2, d.x-w/2);
+                    if(ang<0) ang+=Math.PI*2;
+                    let diff = Math.abs(a - ang);
+                    if(diff < 0.1 || diff > Math.PI*2-0.1) {
+                        ctx.fillStyle='#FFF'; ctx.fillRect(d.x, d.y, 4, 4);
+                        ctx.beginPath(); ctx.arc(d.x, d.y, 20, 0, Math.PI*2); ctx.strokeStyle='rgba(0,255,100,0.5)'; ctx.stroke();
+                    }
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mandelbrot Constraint Fracture</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FFAA00; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FFAA00; }
+</style>
+</head>
+<body>
+<div id="label">Mandelbrot Constraint Fracture</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let t = 0;
+            function drawFractal(x, y, size, depth) {
+                if(depth === 0) return;
+                ctx.strokeStyle = `hsla(${depth*40 + t*50}, 100%, 50%, 0.5)`;
+                ctx.strokeRect(x-size/2, y-size/2, size, size);
+                let s = size/2;
+                if(Math.random() > 0.05) drawFractal(x-s, y-s, s, depth-1);
+                if(Math.random() > 0.05) drawFractal(x+s, y-s, s, depth-1);
+                if(Math.random() > 0.05) drawFractal(x-s, y+s, s, depth-1);
+                if(Math.random() > 0.05) drawFractal(x+s, y+s, s, depth-1);
+            }
+            function loop() {
+                ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0,0,w,h);
+                t += 0.05;
+                if(t%2 < 0.1) drawFractal(w/2, h/2, Math.min(w,h)*0.6, 6);
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

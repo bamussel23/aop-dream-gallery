@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Causal Burn (A34)</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FF4400; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FF4400; }
+</style>
+</head>
+<body>
+<div id="label">Causal Burn (A34)</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let x=w/2, y=h/2, a=0;
+            ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+            function loop() {
+                for(let i=0;i<5;i++) {
+                    a += (Math.random()-0.5);
+                    let nx = x + Math.cos(a)*10;
+                    let ny = y + Math.sin(a)*10;
+                    if(nx<0||nx>w||ny<0||ny>h) { nx=w/2; ny=h/2; }
+                    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny);
+                    ctx.strokeStyle='#FFF'; ctx.stroke();
+                    
+                    // The Burn
+                    ctx.beginPath(); ctx.arc(nx,ny,20,0,Math.PI*2);
+                    let g = ctx.createRadialGradient(nx,ny,0,nx,ny,20);
+                    g.addColorStop(0, 'rgba(255,0,0,0.05)');
+                    g.addColorStop(1, 'transparent');
+                    ctx.fillStyle = g; ctx.fill();
+                    x=nx; y=ny;
+                }
+                ctx.fillStyle='rgba(0,0,0,0.02)'; ctx.fillRect(0,0,w,h);
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

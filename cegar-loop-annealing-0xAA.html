@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CEGAR Loop Annealing</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FF3300; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FF3300; }
+</style>
+</head>
+<body>
+<div id="label">CEGAR Loop Annealing</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let nodes = Array.from({length:50}, ()=>({x:Math.random()*w, y:Math.random()*h, vx:0, vy:0, fail:Math.random()<0.05}));
+            function loop() {
+                ctx.fillStyle = 'rgba(20,5,5,0.2)'; ctx.fillRect(0,0,w,h);
+                nodes.forEach(n => {
+                    n.x += (Math.random()-0.5)*5; n.y += (Math.random()-0.5)*5;
+                    if(n.fail) { n.x += (Math.random()-0.5)*20; n.y += (Math.random()-0.5)*20; if(Math.random()<0.01) n.fail=false; }
+                    else if(Math.random()<0.001) n.fail = true;
+                    ctx.fillStyle = n.fail ? '#F00' : '#FA0';
+                    ctx.beginPath(); ctx.arc(n.x, n.y, n.fail?5:2, 0, Math.PI*2); ctx.fill();
+                });
+                for(let i=0;i<nodes.length;i++) {
+                    for(let j=i+1;j<nodes.length;j++) {
+                        let d = Math.hypot(nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y);
+                        if(d < 100 && !nodes[i].fail && !nodes[j].fail) {
+                            ctx.strokeStyle = `rgba(255,150,0,${1-d/100})`; ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

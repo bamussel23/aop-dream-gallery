@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Narcissus Reflection (A19)</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #00CCFF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #00CCFF; }
+</style>
+</head>
+<body>
+<div id="label">Narcissus Reflection (A19)</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let t=0;
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(0,0,w,h);
+                t+=0.05;
+                let x = w/4 + Math.sin(t)*100;
+                let y = h/2 + Math.cos(t*1.3)*100;
+                
+                // Original
+                ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fillStyle='#0CF'; ctx.fill();
+                
+                // Reflection (Mutated)
+                let rx = w - x + Math.random()*20;
+                let ry = y + Math.random()*20;
+                ctx.beginPath(); ctx.arc(rx,ry,20 + Math.random()*10,0,Math.PI*2); 
+                ctx.fillStyle='rgba(255,0,50,0.8)'; ctx.fill();
+                
+                ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

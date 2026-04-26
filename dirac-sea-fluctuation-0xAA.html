@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dirac Sea Fluctuation</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FFFFFF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FFFFFF; }
+</style>
+</head>
+<body>
+<div id="label">Dirac Sea Fluctuation</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let pairs = [];
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(0,0,w,h);
+                if(Math.random()<0.2) pairs.push({x:Math.random()*w, y:Math.random()*h, d:0});
+                
+                for(let i=pairs.length-1; i>=0; i--) {
+                    let p = pairs[i]; p.d+=2;
+                    ctx.beginPath(); ctx.arc(p.x-p.d, p.y, 3, 0, Math.PI*2); ctx.fillStyle='#0FF'; ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x+p.d, p.y, 3, 0, Math.PI*2); ctx.fillStyle='#F0F'; ctx.fill();
+                    if(p.d > 50) pairs.splice(i,1);
+                }
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

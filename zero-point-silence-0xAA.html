@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Zero-Point Silence (A0)</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #333333; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #333333; }
+</style>
+</head>
+<body>
+<div id="label">Zero-Point Silence (A0)</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let voids = [];
+            function loop() {
+                for(let i=0;i<100;i++) {
+                    ctx.fillStyle=Math.random()<0.5?'#FFF':'#000';
+                    ctx.fillRect(Math.random()*w, Math.random()*h, 4, 4);
+                }
+                if(Math.random()<0.05) voids.push({x:Math.random()*w, y:Math.random()*h, r:0});
+                voids.forEach(v => {
+                    v.r += 2;
+                    ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI*2);
+                    ctx.fillStyle='#000'; ctx.fill();
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

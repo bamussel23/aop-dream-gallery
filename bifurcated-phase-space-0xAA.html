@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bifurcated Phase Space</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FF00AA; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FF00AA; }
+</style>
+</head>
+<body>
+<div id="label">Bifurcated Phase Space</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let ps = Array.from({length:200}, ()=>({x:Math.random()*w, y:Math.random()*h}));
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(0,0,w,h);
+                ctx.strokeStyle='#F0A'; ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+                ps.forEach(p => {
+                    if(p.x < w/2) {
+                        // Rigid Grid
+                        if(Math.random()<0.1) p.x += (Math.random()<0.5?-10:10);
+                        if(Math.random()<0.1) p.y += (Math.random()<0.5?-10:10);
+                        ctx.fillStyle='#0FF'; ctx.fillRect(p.x, p.y, 4, 4);
+                    } else {
+                        // Chaotic Gas
+                        p.x += (Math.random()-0.5)*10; p.y += (Math.random()-0.5)*10;
+                        ctx.fillStyle='#FA0'; ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                    }
+                    if(p.x<0) p.x+=w; if(p.x>w) p.x-=w; if(p.y<0) p.y+=h; if(p.y>h) p.y-=h;
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

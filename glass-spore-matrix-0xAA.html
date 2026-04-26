@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Glass Spore Matrix</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FFFFFF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FFFFFF; }
+</style>
+</head>
+<body>
+<div id="label">The Glass Spore Matrix</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let grid = new Array(Math.floor(w/5)*Math.floor(h/5)).fill(0);
+            let ps = Array.from({length:100}, ()=>({x:w/2, y:h/2}));
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.05)'; ctx.fillRect(0,0,w,h);
+                ps.forEach(p => {
+                    p.x += (Math.random()-0.5)*10; p.y += (Math.random()-0.5)*10;
+                    if(p.x<0||p.x>w||p.y<0||p.y>h) {
+                        ctx.fillStyle='#FFF'; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+                        p.x=w/2; p.y=h/2;
+                    }
+                    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fillRect(p.x,p.y,2,2);
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voronoi Entropy Cells</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FFFF00; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FFFF00; }
+</style>
+</head>
+<body>
+<div id="label">Voronoi Entropy Cells</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let pts = Array.from({length:30}, ()=>({x:Math.random()*w, y:Math.random()*h, vx:Math.random()-0.5, vy:Math.random()-0.5}));
+            function loop() {
+                ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+                pts.forEach(p=>{ p.x+=p.vx*5; p.y+=p.vy*5; if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1; });
+                for(let x=0; x<w; x+=20) {
+                    for(let y=0; y<h; y+=20) {
+                        let closest = 0, minDist = 99999;
+                        pts.forEach((p,i) => { let d = Math.hypot(p.x-x, p.y-y); if(d<minDist){ minDist=d; closest=i; }});
+                        ctx.fillStyle=`hsl(${closest*30}, 100%, 20%)`; ctx.fillRect(x,y,20,20);
+                    }
+                }
+                pts.forEach(p=>{ ctx.fillStyle='#FFF'; ctx.fillRect(p.x,p.y,4,4); });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

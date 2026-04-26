@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Combinatorial Atlas Map</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #00AAFF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #00AAFF; }
+</style>
+</head>
+<body>
+<div id="label">Combinatorial Atlas Map</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let nodes = Array.from({length:100}, ()=>({x:Math.random()*w, y:Math.random()*h, z:Math.random()*100}));
+            let t=0;
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(0,0,w,h);
+                t+=0.01;
+                nodes.forEach(n => {
+                    let s = Math.sin(t+n.z)*50;
+                    ctx.fillStyle='#0AF'; ctx.beginPath(); ctx.arc(n.x, n.y+s, 3, 0, Math.PI*2); ctx.fill();
+                });
+                for(let i=0;i<30;i++) {
+                    let a=nodes[Math.floor(Math.random()*100)], b=nodes[Math.floor(Math.random()*100)];
+                    let sa = Math.sin(t+a.z)*50, sb = Math.sin(t+b.z)*50;
+                    ctx.strokeStyle='rgba(0,170,255,0.1)'; ctx.beginPath(); ctx.moveTo(a.x, a.y+sa); ctx.lineTo(b.x, b.y+sb); ctx.stroke();
+                }
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Strange Loop Waterfall</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #00AFFF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #00AFFF; }
+</style>
+</head>
+<body>
+<div id="label">Strange Loop Waterfall</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let ps = Array.from({length:300}, ()=>({x:Math.random()*w, y:Math.random()*h, vy:2+Math.random()*5}));
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(0,0,w,h);
+                ps.forEach(p => {
+                    p.y += p.vy; p.x += Math.sin(p.y*0.01)*2;
+                    if(p.y > h) { p.y = 0; p.x = w - p.x; }
+                    ctx.fillStyle='#00AFFF'; ctx.fillRect(p.x, p.y, 2, 10);
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>

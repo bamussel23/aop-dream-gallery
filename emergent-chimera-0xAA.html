@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Emergent Chimera</title>
+<style>
+  body, html { margin: 0; padding: 0; background: #010103; overflow: hidden; }
+  canvas { display: block; }
+  #label { position: absolute; top: 20px; left: 20px; color: #FF00FF; font-family: monospace; font-size: 14px; z-index: 10; pointer-events: none; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px #FF00FF; }
+</style>
+</head>
+<body>
+<div id="label">Emergent Chimera</div>
+<canvas id="c"></canvas>
+<script>
+  const c = document.getElementById('c');
+  const ctx = c.getContext('2d');
+  let w = c.width = window.innerWidth;
+  let h = c.height = window.innerHeight;
+  window.onresize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight; };
+  
+            let swarms = [
+                {c:'#F00', p:Array.from({length:50},()=>({x:0,y:0}))},
+                {c:'#0F0', p:Array.from({length:50},()=>({x:w,y:0}))},
+                {c:'#00F', p:Array.from({length:50},()=>({x:0,y:h}))},
+                {c:'#FF0', p:Array.from({length:50},()=>({x:w,y:h}))}
+            ];
+            function loop() {
+                ctx.fillStyle='rgba(0,0,0,0.1)'; ctx.fillRect(0,0,w,h);
+                let cx=w/2, cy=h/2;
+                swarms.forEach(s => {
+                    ctx.fillStyle=s.c;
+                    s.p.forEach(p => {
+                        p.x += (cx-p.x)*0.01 + (Math.random()-0.5)*10;
+                        p.y += (cy-p.y)*0.01 + (Math.random()-0.5)*10;
+                        ctx.fillRect(p.x, p.y, 3, 3);
+                    });
+                });
+                requestAnimationFrame(loop);
+            } loop();
+        
+</script>
+</body>
+</html>
